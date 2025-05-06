@@ -9,11 +9,16 @@ export default function Login() {
   const [message, setMessage] = useState('');
   const [captchaImage, setCaptchaImage] = useState('');
   const [captchaId, setCaptchaId] = useState(null);
+  const [locale, setLocale] = useState(navigator.language || 'tr'); // Tarayıcı dilini kullan, varsayılan 'tr'
 
   // Captcha yenileme fonksiyonu
   const refreshCaptcha = async () => {
     try {
-      const res = await fetch(CAPTCHA_URL);
+      const res = await fetch(CAPTCHA_URL, {
+        headers: {
+          'Accept-Language': locale, // locale'yi header olarak gönder
+        },
+      });
       if (!res.ok) throw new Error('Sunucudan hata döndü');
 
       const data = await res.json();
@@ -28,11 +33,10 @@ export default function Login() {
 
   useEffect(() => {
     refreshCaptcha(); // İlk açılışta captcha çek
-  }, []);
+  }, [locale]); // locale değiştiğinde captcha'yı yenile
 
   // Form değişiklikleri
-  const handleChange = (e) =>
-      setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   // Submit işlemi
   const handleSubmit = async (e) => {
@@ -46,7 +50,10 @@ export default function Login() {
           'http://localhost:8080/Bm470Captcha/api/captcha/validate',
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept-Language': locale, // locale header'ı ekle
+            },
             body: new URLSearchParams({
               captchaId: captchaId,
               captchaInput: form.captcha,
@@ -64,7 +71,10 @@ export default function Login() {
           'http://localhost:8080/Bm470Captcha/api/user/login',
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept-Language': locale, // locale header'ı ekle
+            },
             body: new URLSearchParams({
               username: form.username,
               password: form.password,
