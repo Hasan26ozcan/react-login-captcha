@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RotateCw } from 'lucide-react';
 
 const CAPTCHA_URL = import.meta.env.VITE_CAPTCHA_URL;
@@ -46,14 +47,13 @@ export default function Login() {
   const [captchaId, setCaptchaId] = useState(null);
   const [locale, setLocale] = useState(navigator.language.startsWith('en') ? 'en' : 'tr');
 
-  const t = translations[locale]; // Aktif dildeki metinler
+  const t = translations[locale];
+  const navigate = useNavigate();
 
   const refreshCaptcha = async () => {
     try {
       const res = await fetch(CAPTCHA_URL, {
-        headers: {
-          'Accept-Language': locale,
-        },
+        headers: { 'Accept-Language': locale },
       });
       if (!res.ok) throw new Error('Sunucudan hata döndü');
       const data = await res.json();
@@ -106,7 +106,9 @@ export default function Login() {
       const loginData = await loginRes.json();
       if (!loginData.success) throw new Error(loginData.message || t.error);
 
-      setMessage(loginData.message || t.success);
+      localStorage.setItem('authToken', loginData.token || 'authenticated');
+      navigate('/admin', { replace: true });
+
     } catch (err) {
       setMessage(t.error + ': ' + err.message);
     } finally {
@@ -119,7 +121,6 @@ export default function Login() {
       <div className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">{t.title}</h1>
-          {/* Dil Seçimi Dropdown */}
           <select
               value={locale}
               onChange={(e) => setLocale(e.target.value)}
@@ -166,7 +167,7 @@ export default function Login() {
                   onClick={refreshCaptcha}
                   title={t.reload}
               >
-                <RotateCw size={18} />
+                <RotateCw size={18}/>
               </button>
             </label>
 
